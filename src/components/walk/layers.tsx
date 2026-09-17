@@ -27,9 +27,14 @@ function Layer({
   );
 }
 
-/** Deterministic jitter so the world looks hand placed but never reflows. */
-const wobble = (i: number, amp: number) =>
-  ((Math.sin(i * 12.9898) * 43758.5453) % 1) * amp;
+/**
+ * Deterministic jitter so the world looks hand placed but never reflows.
+ * Takes the fractional part, which stays in 0 to 1 and never goes negative.
+ */
+function wobble(i: number, amp: number) {
+  const v = Math.sin(i * 12.9898) * 43758.5453;
+  return (v - Math.floor(v)) * amp;
+}
 
 export function HillsLayer() {
   return (

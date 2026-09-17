@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import type { Fundraiser } from "@content/fundraisers";
 import { useDialog } from "@/lib/useDialog";
+import { isPlaceholder } from "@/lib/placeholder";
 import Photo from "@/components/ui/Photo";
 import Lightbox from "@/components/ui/Lightbox";
 
@@ -20,12 +21,14 @@ export default function FundraiserDetail({
   const [lightbox, setLightbox] = useState<number | null>(null);
   useDialog(panelRef, onClose);
 
-  const facts = [
-    ["Type", fundraiser.type],
-    ["When", fundraiser.date],
-    ["Where", fundraiser.location],
-    ["Raised", money(fundraiser.raisedUsd)],
-  ] as const;
+  const facts = (
+    [
+      ["Type", fundraiser.type],
+      ["When", fundraiser.date],
+      ["Where", fundraiser.location],
+      ["Raised", money(fundraiser.raisedUsd)],
+    ] as const
+  ).filter(([, value]) => !isPlaceholder(value));
 
   return (
     <>
@@ -80,7 +83,9 @@ export default function FundraiserDetail({
                 What it paid for
               </h3>
               <p className="measure mt-2 text-ink-soft">
-                {fundraiser.whatItPaidFor}
+                {isPlaceholder(fundraiser.whatItPaidFor)
+                  ? "Still being confirmed."
+                  : fundraiser.whatItPaidFor}
               </p>
             </div>
           </div>

@@ -6,11 +6,6 @@ which tags `@codehopeglobal`. Each therefore carries Instagram interface chrome
 (top bar, like and comment row, caption) that must be cropped away before the
 photo can be used on the site.
 
-Status legend
-- `READY` the crop region is identified and the image is slotted into the site
-- `BLOCKED` cannot be produced until the original file is on disk
-- `UNUSED` not used on the site, reason given
-
 All fourteen were delivered through the `OMV0601/chg` GitHub repository, copied
 into `./photos/` untouched, and processed by `scripts/process-photos.py`. That
 script holds the exact crop box for every image and can be re-run at any time.

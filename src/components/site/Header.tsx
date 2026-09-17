@@ -1,31 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { nav, links, org } from "@content/site";
 import Logo from "@/components/ui/Logo";
 
-/**
- * Transparent while the walk scene is on screen, solid afterwards. Pages with
- * no scene render no sentinel, so the header is solid from the first frame.
- */
-export default function Header() {
-  const [solid, setSolid] = useState(true);
+const SENTINEL = "[data-header-sentinel]";
+const HEADER_H = 72;
 
-  useEffect(() => {
-    const sentinel = document.querySelector("[data-header-sentinel]");
-    if (!sentinel) {
-      setSolid(true);
-      return;
-    }
-    setSolid(false);
-    const io = new IntersectionObserver(
-      ([entry]) => setSolid(!entry.isIntersecting),
-      { rootMargin: "-72px 0px 0px 0px", threshold: 0 },
-    );
-    io.observe(sentinel);
-    return () => io.disconnect();
-  }, []);
+/**
+ * The header is transparent while a page's opening scene is on screen and
+ * solid once it has passed. Pages without a scene render no sentinel, so they
+ * are solid throughout.
+ */
+function subscribe(onChange: () => void) {
+  const sentinel = document.querySelector(SENTINEL);
+  if (!sentinel) return () => {};
+
+  const io = new IntersectionObserver(onChange, {
+    rootMargin: `-${HEADER_H}px 0px 0px 0px`,
+    threshold: 0,
+  });
+  io.observe(sentinel);
+  return () => io.disconnect();
+}
+
+function getSnapshot() {
+  const sentinel = document.querySelector(SENTINEL);
+  if (!sentinel) return true;
+  return sentinel.getBoundingClientRect().bottom <= HEADER_H;
+}
+
+export default function Header() {
+  const solid = useSyncExternalStore(subscribe, getSnapshot, () => true);
 
   return (
     <header
@@ -35,28 +42,36 @@ export default function Header() {
           : "on-dark bg-transparent text-whitewash"
       }`}
     >
-      <div className="mx-auto flex h-18 max-w-[84rem] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-10">
+      {!solid && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[linear-gradient(180deg,rgba(9,22,31,0.72)_0%,rgba(9,22,31,0)_100%)]"
+        />
+      )}
+      <div className="relative mx-auto flex h-18 max-w-[84rem] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-10">
         <Link
           href="/"
-          className="flex items-center gap-2.5 font-display text-[1.0625rem] font-bold tracking-tight sm:text-xl"
+          className="flex shrink-0 items-center gap-2.5 font-display font-bold tracking-tight sm:text-xl"
+          aria-label={`${org.name}, home`}
         >
           <Logo className="h-7 w-7 shrink-0 text-marigold" />
-          <span className="whitespace-nowrap">{org.name}</span>
+          {/* The wordmark gives way to the navigation on narrow screens. */}
+          <span className="hidden whitespace-nowrap sm:inline">{org.name}</span>
         </Link>
 
-        <nav aria-label="Main" className="flex items-center gap-1 sm:gap-4">
+        <nav aria-label="Main" className="flex items-center gap-2 sm:gap-4">
           {nav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="hidden rounded-full px-3 py-2 font-display text-[0.9375rem] font-medium hover:underline hover:underline-offset-4 sm:inline-block"
+              className="rounded-full px-1 py-2 font-display text-[0.8125rem] font-medium hover:underline hover:underline-offset-4 sm:px-3 sm:text-[0.9375rem]"
             >
               {item.label}
             </Link>
           ))}
           <a
             href={links.donate}
-            className="rounded-full bg-marigold px-5 py-2.5 font-display text-[0.9375rem] font-semibold text-ink transition-colors hover:bg-marigold-deep"
+            className="rounded-full bg-marigold px-4 py-2.5 font-display text-[0.8125rem] font-semibold text-ink transition-colors hover:bg-marigold-deep sm:px-5 sm:text-[0.9375rem]"
           >
             Donate
           </a>

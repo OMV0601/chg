@@ -3,6 +3,12 @@
 import { useEffect, type RefObject } from "react";
 
 /**
+ * Only the dialog on top of this stack answers Escape, so closing a lightbox
+ * opened from inside a panel does not close the panel underneath it too.
+ */
+const stack: symbol[] = [];
+
+/**
  * Shared modal behaviour: focus moves in and comes back, Tab stays inside,
  * Escape closes, and the page behind does not scroll.
  */
@@ -11,8 +17,11 @@ export function useDialog(
   onClose: () => void,
 ) {
   useEffect(() => {
+    const id = Symbol("dialog");
+    stack.push(id);
+
     const restore = document.activeElement as HTMLElement | null;
-    const { overflow } = document.body.style;
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     const focusable = () =>
@@ -25,8 +34,11 @@ export function useDialog(
     focusable()[0]?.focus();
 
     const onKey = (e: KeyboardEvent) => {
+      if (stack[stack.length - 1] !== id) return;
+
       if (e.key === "Escape") {
         e.preventDefault();
+        e.stopPropagation();
         onClose();
         return;
       }
@@ -49,7 +61,9 @@ export function useDialog(
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = overflow;
+      const at = stack.indexOf(id);
+      if (at > -1) stack.splice(at, 1);
+      document.body.style.overflow = previousOverflow;
       restore?.focus();
     };
   }, [panelRef, onClose]);

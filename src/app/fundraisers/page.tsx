@@ -9,6 +9,7 @@ import { stats } from "@content/site";
 import { Section, Heading } from "@/components/ui/Section";
 import Photo from "@/components/ui/Photo";
 import FundraisersExplorer from "@/components/fundraisers/FundraisersExplorer";
+import { isPlaceholder } from "@/lib/placeholder";
 
 export const metadata: Metadata = {
   title: "Our fundraisers",
@@ -99,14 +100,16 @@ export default function FundraisersPage() {
                   {featured.date}
                 </dd>
               </div>
-              <div>
-                <dt className="font-display text-[0.8125rem] text-ink-soft">
-                  Where
-                </dt>
-                <dd className="mt-1 font-display font-semibold">
-                  {featured.location}
-                </dd>
-              </div>
+              {!isPlaceholder(featured.location) && (
+                <div>
+                  <dt className="font-display text-[0.8125rem] text-ink-soft">
+                    Where
+                  </dt>
+                  <dd className="mt-1 font-display font-semibold">
+                    {featured.location}
+                  </dd>
+                </div>
+              )}
             </dl>
           </div>
         </div>

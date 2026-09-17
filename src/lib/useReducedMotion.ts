@@ -1,23 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 const QUERY = "(prefers-reduced-motion: reduce)";
 
+function subscribe(onChange: () => void) {
+  const mql = window.matchMedia(QUERY);
+  mql.addEventListener("change", onChange);
+  return () => mql.removeEventListener("change", onChange);
+}
+
+const getSnapshot = () => window.matchMedia(QUERY).matches;
+
 /**
- * Starts `null` so the first server and client render agree, then resolves.
- * Components that branch on it should treat `null` as "not decided yet".
+ * Null until the client has read the media query, so the first render matches
+ * what the server sent. Components should treat null as "not decided yet".
  */
 export function useReducedMotion(): boolean | null {
-  const [reduced, setReduced] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const mql = window.matchMedia(QUERY);
-    setReduced(mql.matches);
-    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
-
-  return reduced;
+  return useSyncExternalStore(subscribe, getSnapshot, () => null);
 }

@@ -72,14 +72,12 @@ function Counter({
   instant: boolean;
 }) {
   const { prefix, suffix } = parse(display);
-  const [n, setN] = useState(instant ? value : 0);
+  const [counted, setCounted] = useState(0);
+  // Anyone who has asked for less motion sees the final figure immediately.
+  const n = instant ? value : counted;
 
   useEffect(() => {
-    if (instant) {
-      setN(value);
-      return;
-    }
-    if (!run) return;
+    if (instant || !run) return;
 
     let frame = 0;
     const start = performance.now();
@@ -88,7 +86,7 @@ function Counter({
     const tick = (now: number) => {
       const t = Math.min((now - start) / DURATION, 1);
       // Ease out, so it settles rather than stops dead.
-      setN(Math.round(value * (1 - Math.pow(1 - t, 3))));
+      setCounted(Math.round(value * (1 - Math.pow(1 - t, 3))));
       if (t < 1) frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
